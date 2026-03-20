@@ -5,7 +5,7 @@ Welcome to **ShopSavvy**, a full-stack e-commerce web application for a shoe sto
 ## 📁 Project Structure
 
 ```
-Futwrk/
+ShopSavvy/
 ├── frontend/          # React frontend application
 │   ├── src/           # React source code
 │   ├── public/        # Static files
