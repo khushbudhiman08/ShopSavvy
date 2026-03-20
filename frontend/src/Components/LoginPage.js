@@ -4,6 +4,7 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { ScaleLoader } from "react-spinners";
 import "./Login.css";
 import toast from "react-hot-toast";
+import { authAPI } from "../utils/api";
 
 export default function LoginPage({
   setPageShowStatus,
@@ -24,27 +25,20 @@ export default function LoginPage({
     });
   }
 
-  function submitHandler(event) {
+  async function submitHandler(event) {
     event.preventDefault();
+    setLoaderStatus(true);
 
-    if (
-      formData.username === localStorage.getItem("user") &&
-      formData.password === localStorage.getItem("pass")
-    ) {
-      setLoaderStatus(true);
-
-      setTimeout(() => {
-        setLoginStatus(true);
-        setLoaderStatus(false);
-        setMainUser(formData.username);
-        toast.success("Logged In Successfully");
-      }, 2000);
-
-      return;
+    try {
+      const response = await authAPI.login(formData.username, formData.password);
+      setLoginStatus(true);
+      setMainUser(response.user.username);
+      toast.success("Logged In Successfully");
+    } catch (error) {
+      toast.error(error.message || "Invalid Username Or Password");
+    } finally {
+      setLoaderStatus(false);
     }
-
-    toast.error("Invalid Username Or Password");
-    return;
   }
 
   return (

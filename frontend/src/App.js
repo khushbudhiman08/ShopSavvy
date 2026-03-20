@@ -4,14 +4,15 @@ import Mainpage from './Components/Mainpage';
 import Navbar from './Components/Navbar';
 import Footer from './Components/Footer';
 import { Routes,Route } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Men from './Components/Men';
 import Women from './Components/Women';
 import Collection from './Components/Collection';
+
 import Lookbook from './Components/Lookbook';
 import Contact from './Components/Contact';
 import ShoeBuyCard from './Components/ShoeBuyCard';
-import Cart from './Components/Cart';
+import Cart from './Components/Cart';                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
 import NoItemsMatched from './Components/NoItemsMatched';
 import Login from './Components/Login';
 import Account from './Components/Account';
@@ -39,7 +40,25 @@ function App() {
   const [loginStatus,setLoginStatus] = useState(false);
   const [mainUser,setMainUser] = useState("");
   const [totalOrderCost,setTotalOrderCost] = useState("");
-  const [footerStatus,setFooterStatus] = useState(true); 
+  const [footerStatus,setFooterStatus] = useState(true);
+
+  // Load cart from database when user logs in
+  useEffect(() => {
+    const loadCartFromDB = async () => {
+      const token = localStorage.getItem('token');
+      if (token && loginStatus) {
+        try {
+          const { cartAPI } = await import('./utils/api');
+          const cart = await cartAPI.getCart();
+          setCartItems(cart.items || []);
+          setCartCount(cart.items ? cart.items.reduce((sum, item) => sum + item.quantity, 0) : 0);
+        } catch (error) {
+          console.error('Error loading cart:', error);
+        }
+      }
+    };
+    loadCartFromDB();
+  }, [loginStatus]); 
 
   const MenData = [
     {

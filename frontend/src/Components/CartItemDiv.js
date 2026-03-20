@@ -3,6 +3,7 @@ import { IoCloseCircleOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 
 export default function CartItemDiv({
+  itemId,
   index,
   image,
   title,
@@ -20,6 +21,10 @@ export default function CartItemDiv({
 
   function plusHandler() {
     onUpdateQuantity(quantity + 1);
+  }
+
+  function handleRemove() {
+    onRemove(itemId, index);
   }
 
   return (
@@ -99,7 +104,7 @@ export default function CartItemDiv({
           className="text-2xl cursor-pointer text-white"
           id="cartRemoveBtn"
           onClick={() => {
-            onRemove(index);
+            handleRemove();
             toast.success(`${title} Removed From Cart`);
           }}
         />

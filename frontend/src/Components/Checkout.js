@@ -7,6 +7,7 @@ import { IoLockClosedSharp } from "react-icons/io5";
 import CheckoutItems from "./CheckoutItems";
 import "./Checkout.css";
 import { useNavigate } from "react-router-dom";
+import { ordersAPI, cartAPI, getToken } from "../utils/api";
 
 export default function Checkout({
   setnavStatus,
@@ -36,7 +37,7 @@ export default function Checkout({
     }, 2000);
   }
 
-  function submitHandler(event) {
+  async function submitHandler(event) {
     event.preventDefault();
     if (paymentStatus === false) {
       toast.error(
@@ -45,13 +46,55 @@ export default function Checkout({
       return;
     }
 
+    const formData = new FormData(event.target);
+    const orderData = {
+      items: cartItems.map(item => ({
+        productId: item.id || item.productId,
+        title: item.title,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+        size: item.size
+      })),
+      totalAmount: totalOrderCost,
+      customerInfo: {
+        email: formData.get("emailoruser") || "",
+        firstName: formData.get("firstname") || "",
+        lastName: formData.get("lastname") || "",
+        phone: formData.get("phone") || ""
+      },
+      billingAddress: {
+        street: formData.get("housenumber") || "",
+        apartment: formData.get("apartment") || "",
+        city: formData.get("town") || "",
+        state: formData.get("state") || "",
+        postcode: formData.get("postcode") || ""
+      }
+    };
+
     document.documentElement.scrollTop = 0;
     setLoaderStatus(true);
-    setTimeout(() => {
+    
+    try {
+      await ordersAPI.create(orderData);
+      // Clear cart after successful order
+      const token = getToken();
+      if (token) {
+        try {
+          await cartAPI.clearCart();
+        } catch (cartError) {
+          console.error("Error clearing cart:", cartError);
+        }
+      }
+      toast.success("Order placed successfully!");
       navigate("/confirm");
-      setLoaderStatus(false);
       setFooterStatus(false);
-    }, 2000);
+    } catch (error) {
+      toast.error(error.message || "Failed to place order. Please try again.");
+      console.error("Order creation error:", error);
+    } finally {
+      setLoaderStatus(false);
+    }
   }
 
   return (

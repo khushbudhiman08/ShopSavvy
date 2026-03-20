@@ -4,6 +4,7 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { ScaleLoader } from "react-spinners";
 import "./Login.css";
 import toast from "react-hot-toast";
+import { authAPI } from "../utils/api";
 
 export default function SignUpPage({ setPageShowStatus, setLoginStatus, setMainUser }) {
   const [showPass1, setShowPass1] = useState(false);
@@ -19,23 +20,34 @@ export default function SignUpPage({ setPageShowStatus, setLoginStatus, setMainU
     pass2: "",
   });
 
-  function submitHandler(event) {
+  async function submitHandler(event) {
     event.preventDefault();
     if (formData.pass1 !== formData.pass2) {
       toast.error("Passwords Do Not Match");
       return;
     }
 
+    if (formData.pass1.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      return;
+    }
+
     setLoaderStatus(true);
-    setTimeout(() => {
-      // setLoginStatus(true);
+    try {
+      const response = await authAPI.register(
+        formData.username,
+        formData.email,
+        formData.pass1
+      );
+      setLoginStatus(true);
       setPageShowStatus(false);
-      setLoaderStatus(false);
-      setMainUser(formData.username);
-      localStorage.setItem("user",formData.username);
-      localStorage.setItem("pass",formData.pass1);
+      setMainUser(response.user.username);
       toast.success("Account Created Successfully");
-    }, 2000);
+    } catch (error) {
+      toast.error(error.message || "Failed to create account");
+    } finally {
+      setLoaderStatus(false);
+    }
   }
 
   function changeHandler(event) {

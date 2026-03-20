@@ -5,6 +5,9 @@ import mastercard from "../Logos/mastercard.png";
 import rupay from "../Logos/rupay.png";
 import { ScaleLoader } from "react-spinners";
 import toast from "react-hot-toast";
+import { cartAPI, getToken } from "../utils/api";
+import WriteReview from "./WriteReview";
+import ProductReviews from "./ProductReviews";
 
 export default function ShoeBuyCard({
   shoeInfo,
@@ -61,54 +64,66 @@ export default function ShoeBuyCard({
     event.target.style.backgroundColor = "#cd9940";
   }
 
-  function cartHandler() {
-
+  async function cartHandler() {
     if(shoeSize === 0) {
       toast.error("Please Select Shoe Size");
-      return ;
+      return;
     }
+    
     document.documentElement.scrollTop = 0;
-
-    const updatedCartItems = [...cartItems];
-
-    const existingItemIndex = updatedCartItems.findIndex(
-      (item) => item.title === shoeInfo.shoeTitle && item.size === shoeSize
-    );
-
-
-    if (existingItemIndex !== -1) {
-      updatedCartItems[existingItemIndex].quantity += shoeCount;
-    } else {
-      
-      updatedCartItems.push({
-        image: shoeInfo.image,
-        title: shoeInfo.shoeTitle,
-        price: shoeInfo.shoePrice,
-        quantity: shoeCount,
-        size: shoeSize,
-      });
-    }
-
-    
-    setCartItems(updatedCartItems);
-
-    
-    setShoeCount(1);
-
-    
-    setShoeSize(0);
-
-    
     setLoaderStatus(true);
 
-    setTimeout(() => {
+    try {
+      const token = getToken();
       
-      setCartCount(cartCount + shoeCount);
-      
-      setLoaderStatus(false);
-      toast.success(`${shoeInfo.shoeTitle} Added To Cart`);
-    }, 3000);
+      if (token) {
+        // User is logged in - save to database
+        await cartAPI.addToCart({
+          productId: shoeInfo.id,
+          title: shoeInfo.shoeTitle,
+          image: shoeInfo.image,
+          price: shoeInfo.shoePrice,
+          quantity: shoeCount,
+          size: shoeSize.toString()
+        });
+        
+        // Fetch updated cart from database
+        const updatedCart = await cartAPI.getCart();
+        setCartItems(updatedCart.items);
+        setCartCount(updatedCart.items.reduce((sum, item) => sum + item.quantity, 0));
+        toast.success(`${shoeInfo.shoeTitle} Added To Cart`);
+      } else {
+        // User not logged in - use local state (fallback)
+        const updatedCartItems = [...cartItems];
+        const existingItemIndex = updatedCartItems.findIndex(
+          (item) => item.title === shoeInfo.shoeTitle && item.size === shoeSize.toString()
+        );
 
+        if (existingItemIndex !== -1) {
+          updatedCartItems[existingItemIndex].quantity += shoeCount;
+        } else {
+          updatedCartItems.push({
+            id: shoeInfo.id,
+            image: shoeInfo.image,
+            title: shoeInfo.shoeTitle,
+            price: shoeInfo.shoePrice,
+            quantity: shoeCount,
+            size: shoeSize.toString(),
+          });
+        }
+
+        setCartItems(updatedCartItems);
+        setCartCount(cartCount + shoeCount);
+        toast.success(`${shoeInfo.shoeTitle} Added To Cart`);
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error(error.message || "Failed to add item to cart");
+    } finally {
+      setShoeCount(1);
+      setShoeSize(0);
+      setLoaderStatus(false);
+    }
   }
 
   console.log(cartItems);
@@ -301,6 +316,16 @@ export default function ShoeBuyCard({
               </div>
             </div>
           </div>
+
+          {/* Reviews Section */}
+          {shoeInfo.id && (
+            <div className="w-[92%] mt-10">
+              <div className="w-[100%] h-[1px] bg-neutral-600 mb-10"></div>
+              
+              {/* Product Reviews */}
+              <ProductReviews productId={shoeInfo.id} productTitle={shoeInfo.shoeTitle} />
+            </div>
+          )}
         </div>
       )}
     </div>

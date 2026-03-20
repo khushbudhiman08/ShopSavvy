@@ -2,13 +2,16 @@ import React, { useState, useEffect } from "react";
 import CartItemDiv from "./CartItemDiv";
 import "./Cart.css";
 import { useNavigate } from "react-router-dom";
+import { cartAPI, getToken } from "../utils/api";
+import toast from "react-hot-toast";
 
 export default function CartItems({
   cartItems,
   setCartItems,
   setCartCount,
   cartCount,
-  setTotalOrderCost
+  setTotalOrderCost,
+  loadCart
 }) {
   const [totalCost, setTotalCost] = useState(0);
   const navigate = useNavigate();
@@ -28,16 +31,45 @@ export default function CartItems({
     calculateTotalCost();
   }, [cartItems]);
 
-  const updateCartItemQuantity = (index, newQuantity) => {
-    const updatedCartItems = [...cartItems];
-    updatedCartItems[index].quantity = newQuantity;
-    setCartItems(updatedCartItems);
+  const updateCartItemQuantity = async (itemId, newQuantity) => {
+    const token = getToken();
+    if (token && itemId) {
+      try {
+        await cartAPI.updateCartItem(itemId, newQuantity);
+        if (loadCart) {
+          await loadCart();
+        }
+      } catch (error) {
+        toast.error(error.message || "Failed to update quantity");
+      }
+    } else {
+      // Fallback for local state (not logged in)
+      const updatedCartItems = [...cartItems];
+      const itemIndex = updatedCartItems.findIndex(item => item._id === itemId || item.id === itemId);
+      if (itemIndex !== -1) {
+        updatedCartItems[itemIndex].quantity = newQuantity;
+        setCartItems(updatedCartItems);
+      }
+    }
   };
 
-  const removeCartItem = (index) => {
-    const updatedCartItems = [...cartItems];
-    updatedCartItems.splice(index, 1);
-    setCartItems(updatedCartItems);
+  const removeCartItem = async (itemId, itemIndex) => {
+    const token = getToken();
+    if (token && itemId) {
+      try {
+        await cartAPI.removeFromCart(itemId);
+        if (loadCart) {
+          await loadCart();
+        }
+      } catch (error) {
+        toast.error(error.message || "Failed to remove item");
+      }
+    } else {
+      // Fallback for local state (not logged in)
+      const updatedCartItems = [...cartItems];
+      updatedCartItems.splice(itemIndex, 1);
+      setCartItems(updatedCartItems);
+    }
   };
 
   return (
@@ -59,7 +91,8 @@ export default function CartItems({
         {/* Cart items list */}
         {cartItems.map((cart, index) => (
           <CartItemDiv
-            key={index}
+            key={cart._id || index}
+            itemId={cart._id}
             index={index}
             image={cart.image}
             title={cart.title}
@@ -67,9 +100,9 @@ export default function CartItems({
             size={cart.size}
             price={cart.price}
             onUpdateQuantity={(newQuantity) =>
-              updateCartItemQuantity(index, newQuantity)
+              updateCartItemQuantity(cart._id || cart.id, newQuantity)
             }
-            onRemove={removeCartItem}
+            onRemove={(itemId) => removeCartItem(itemId || cart.id, index)}
             setCartCount={setCartCount}
             cartCount={cartCount}
           />

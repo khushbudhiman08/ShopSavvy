@@ -1,0 +1,13 @@
+.product-reviews-container {
+  margin-top: 2rem;
+}
+
+.review-item {
+  transition: all 0.2s;
+}
+
+.review-item:hover {
+  border-color: #f6aa28;
+}
+
+

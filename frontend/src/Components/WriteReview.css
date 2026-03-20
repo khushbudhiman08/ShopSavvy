@@ -1,0 +1,14 @@
+.write-review-container {
+  border: 1px solid #404040;
+}
+
+.write-review-container textarea {
+  resize: vertical;
+}
+
+.write-review-container textarea:focus {
+  border-color: #f6aa28;
+  box-shadow: 0 0 0 1px #f6aa28;
+}
+
+
