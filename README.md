@@ -1,6 +1,6 @@
-# Futwrk - E-commerce Application
+# ShopSavvy - E-commerce Application
 
-Welcome to **Futwrk**, a full-stack e-commerce web application for a shoe store, built with React (frontend) and Node.js/Express (backend).
+Welcome to **ShopSavvy**, a full-stack e-commerce web application for a shoe store, built with React (frontend) and Node.js/Express (backend).
 
 ## 📁 Project Structure
 
